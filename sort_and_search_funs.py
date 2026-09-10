@@ -19,3 +19,6 @@ def quick_sort_rec(A):
 def bin_search_iter(A):
 
 def bin_search_rec(A):
+
+if __name__ == "__main__":
+print("<module name> : Is intended to be imported and not executed.")
