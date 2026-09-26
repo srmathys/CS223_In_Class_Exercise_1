@@ -2,7 +2,7 @@
 # ice1_analysis
 
 from sort_and_search_funs import *
-#from util_funs import
+from util_funs import timer_decorator
 import pandas as pd
 import anndata as ad
 #Loads the .h5ad file into an AnnData object
@@ -11,7 +11,7 @@ import anndata as ad
 #def filter_mt_
 
 # testing the sort
-
+execution_log = {}
 
 data = {
     'Gene' : ['CTCF','HTT','DND','KCQN1'],
@@ -20,5 +20,5 @@ data = {
 }
 df = pd.DataFrame(data)
 
-insert_sort_iter(df,2,asc = False)
+print(quick_sort_rec(df,1,asc = False))
 print(df)
