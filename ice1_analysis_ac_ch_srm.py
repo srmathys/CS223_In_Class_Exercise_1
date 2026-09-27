@@ -8,61 +8,22 @@ import pandas as pd
 import anndata as ad
 
 
-def filter_mt_cells(anndata_obj, mt_exp_lvl_threshold, gene_exp_threshold):
+def filter_mt_cells(anndata_obj, mt_exp_lvl_threshold, gene_exp_threshold, sorting_func):
+    # Adding some things to just make it more useful overall, even though it's not exactly what is asked
 
     # ============================================================
     # 1. GET CELL DATAFRAME
     # ============================================================
 
     # Make a copy so original AnnData is not modified
-    original_df = anndata_obj.T.var.copy()
+    working_df = anndata_obj.T.var.copy(deep = True)
 
-    # Determine the column numbers for:
-    # - mitochondrial expression %
-    # - number of genes expressed
-    #
-    # TODO: fill these in after checking original_df.columns
-    mt_col = ???
-    gene_col = ???
+    mt_col = 2 # column for mitochondrial expression
+    gene_col = 1 # column for genes expressed.
 
-
-    # ============================================================
-    # 2. SORT BY MITOCHONDRIAL EXPRESSION -- DESCENDING
-    # ============================================================
-
-    # IMPORTANT:
-    # Every sorting algorithm starts with a fresh copy of original_df
-
-    # ---------- Iterative sorts ----------
-
-    insert_iter_df = original_df.copy()
-    insert_sort_iter(insert_iter_df, mt_col, asc=False)
-
-    selection_iter_df = original_df.copy()
-    selection_sort_iter(selection_iter_df, mt_col, asc=False)
-
-    merge_iter_df = original_df.copy()
-    merge_sort_iter(merge_iter_df, mt_col, asc=False)
-
-    quick_iter_df = original_df.copy()
-    quick_sort_iter(quick_iter_df, mt_col, asc=False)
-
-
-    # ---------- Recursive sorts ----------
-
-    insert_rec_df = original_df.copy()
-    insert_sort_rec(insert_rec_df, mt_col, asc=False)
-
-    selection_rec_df = original_df.copy()
-    selection_sort_rec(selection_rec_df, mt_col, asc=False)
-
-    merge_rec_df = original_df.copy()
-    merge_sort_rec(merge_rec_df, mt_col, asc=False)
-
-    quick_rec_df = original_df.copy()
-    quick_sort_rec(quick_rec_df, mt_col, asc=False)
-
-
+    timing_dict = {}
+    func_name = sorting_func.__name__
+    print(working_df.head(5))
     # ============================================================
     # 3. SAVE MITOCHONDRIAL SORT TIMINGS
     # ============================================================
@@ -72,13 +33,9 @@ def filter_mt_cells(anndata_obj, mt_exp_lvl_threshold, gene_exp_threshold):
     #
     # Exact implementation depends on how timer_decorator
     # returns/stores timing information.
-
-    mt_sort_times = {
-        # "Insertion Iterative": ...,
-        # "Insertion Recursive": ...,
-        # "Selection Iterative": ...,
-        # etc.
-    }
+    # change this to add a regular timer block and manually input
+    timing_dict[func_name] = {}
+    timing_dict[func_name]["mt_sort_times"]= sorting_func(working_df, mt_col, asc = False)
 
 
     # ============================================================
@@ -95,7 +52,8 @@ def filter_mt_cells(anndata_obj, mt_exp_lvl_threshold, gene_exp_threshold):
     # insert_iter_filtered = ...
     # selection_iter_filtered = ...
     # etc.
-
+    # using boolean indexing for now.
+    mt_filtered_df = working_df[working_df.iloc[:,mt_col] > mt_exp_lvl_threshold]
 
     # ============================================================
     # 5. SORT REMAINING CELLS BY NUMBER OF GENES -- ASCENDING
@@ -109,17 +67,12 @@ def filter_mt_cells(anndata_obj, mt_exp_lvl_threshold, gene_exp_threshold):
     # insert_sort_iter(insert_iter_filtered, gene_col, asc=True)
     #
     # Repeat for all iterative + recursive algorithms.
-
+    timing_dict[func_name]["gene_sort_times"] = sorting_func(mt_filtered_df,
+                                                                          gene_col, asc=True)
 
     # ============================================================
     # 6. SAVE GENE-EXPRESSION SORT TIMINGS
     # ============================================================
-
-    gene_sort_times = {
-        # "Insertion Iterative": ...,
-        # "Insertion Recursive": ...,
-        # etc.
-    }
 
 
     # ============================================================
@@ -130,8 +83,7 @@ def filter_mt_cells(anndata_obj, mt_exp_lvl_threshold, gene_exp_threshold):
     # gene_exp_threshold.
     #
     # Repeat for each sorted DataFrame.
-
-
+    gene_filtered_df = mt_filtered_df[mt_filtered_df.iloc[:,gene_col] < gene_exp_threshold]
     # ============================================================
     # 8. RETURN RESULTS
     # ============================================================
@@ -141,7 +93,7 @@ def filter_mt_cells(anndata_obj, mt_exp_lvl_threshold, gene_exp_threshold):
 
     # Possible structure:
     #
-    # return {
+    return gene_filtered_df, timing_dict
     #     "filtered_data": ...,
     #     "mt_sort_times": mt_sort_times,
     #     "gene_sort_times": gene_sort_times
@@ -157,20 +109,37 @@ def main():
     adata = ad.read_h5ad("./data/pbmc_sample.h5ad")
 
     # Useful while developing
-    print(adata)
-    print(adata.T.var.columns)
-    print(adata.T.var.head())
-
-
+    #print(adata)
+    #print(adata.T.var.columns)
+    #print(adata.T.var.head())
+    timing_dict = {}
+    results_dict = {}
+    # ============================================================
+    # LIST OF SORTING METHODS TO USE
+    # ============================================================
+    #sorting_functions = [quick_sort_rec, selection_sort_iter,
+     #                  selection_sort_rec, insert_sort_iter, insert_sort_rec]
+    sorting_functions = [quick_sort_iter]
     # ============================================================
     # RUN FILTER
     # ============================================================
+    for func in sorting_functions:
 
-    results = filter_mt_cells(
-        adata,
-        mt_exp_lvl_threshold=0.10,   # temporary test value
-        gene_exp_threshold=200      # temporary test value
-    )
+        results, timings = filter_mt_cells(adata,
+                                       mt_exp_lvl_threshold=0.10, gene_exp_threshold=200,
+                                       sorting_func = func)
+        results_dict.update(results)
+        timing_dict.update(timings)
+
+    timings_df = pd.DataFrame.from_dict(timing_dict, orient = 'index')
+    print(timings_df)
+
+
+    #results = filter_mt_cells(
+    #    adata,
+    #    mt_exp_lvl_threshold=0.10,   # temporary test value
+    #    gene_exp_threshold=200      # temporary test value
+    #)
 
 
     # ============================================================
