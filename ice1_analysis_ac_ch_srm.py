@@ -23,56 +23,49 @@ def filter_mt_cells(anndata_obj, mt_exp_lvl_threshold, gene_exp_threshold, sorti
 
     timing_dict = {}
     func_name = sorting_func.__name__
-    print(working_df.head(5))
+    print("Initial Data frame with ", working_df.shape[0], "rows and ", working_df.shape[1], "columns")
+    print(working_df.iloc[:5,:3])
+
+
+    # ============================================================
+    # 2. SORT BY MITOCHONDRIAL EXPRESSION -- DESCENDING
+    # ============================================================
     # ============================================================
     # 3. SAVE MITOCHONDRIAL SORT TIMINGS
     # ============================================================
-
-    # TODO:
-    # Store timing results from each sorting algorithm.
-    #
-    # Exact implementation depends on how timer_decorator
-    # returns/stores timing information.
-    # change this to add a regular timer block and manually input
+    # Sets up a timing dictionary with nested values for accessing later
     timing_dict[func_name] = {}
     timing_dict[func_name]["mt_sort_times"]= sorting_func(working_df, mt_col, asc = False)
-
-
+    # no need to return a dataframe as the changes are reflected
+    print("Sorted by mitochondrial expression level")
+    print("dataframe has size of", working_df.shape[0], "rows and ", working_df.shape[1], "columns")
+    print(working_df.iloc[:5,:3])
     # ============================================================
     # 4. FILTER HIGH-MITOCHONDRIAL CELLS
     # ============================================================
 
     # Remove rows where mitochondrial expression is GREATER THAN
     # mt_exp_lvl_threshold.
-    #
-    # Do this for each sorted DataFrame.
-    #
-    # Example structure:
-    #
-    # insert_iter_filtered = ...
-    # selection_iter_filtered = ...
-    # etc.
-    # using boolean indexing for now.
-    mt_filtered_df = working_df[working_df.iloc[:,mt_col] > mt_exp_lvl_threshold]
-
+    # assumes that there are no values under 0
+    mt_filtered_df = working_df[working_df.iloc[:,mt_col] < mt_exp_lvl_threshold]
+    print("filtered by mitochondrial expression level threshold")
+    print("New size is", mt_filtered_df.shape[0], "rows and ", mt_filtered_df.shape[1], "columns")
+    print(mt_filtered_df.iloc[:5,:3])
     # ============================================================
     # 5. SORT REMAINING CELLS BY NUMBER OF GENES -- ASCENDING
     # ============================================================
-
-    # Each algorithm now sorts its corresponding filtered
-    # DataFrame using gene_col.
-    #
-    # Example:
-    #
-    # insert_sort_iter(insert_iter_filtered, gene_col, asc=True)
-    #
-    # Repeat for all iterative + recursive algorithms.
-    timing_dict[func_name]["gene_sort_times"] = sorting_func(mt_filtered_df,
-                                                                          gene_col, asc=True)
-
     # ============================================================
     # 6. SAVE GENE-EXPRESSION SORT TIMINGS
     # ============================================================
+    # Each algorithm now sorts its corresponding filtered
+    # DataFrame using gene_col.
+
+    timing_dict[func_name]["gene_sort_times"] = sorting_func(mt_filtered_df,
+                                                                          gene_col, asc=True)
+    print("Sorted by gene-expression levels")
+    print("Dataframe has size of", mt_filtered_df.shape[0], "rows and ", mt_filtered_df.shape[1], "columns")
+    print(mt_filtered_df.iloc[:5,:3])
+
 
 
     # ============================================================
@@ -83,7 +76,15 @@ def filter_mt_cells(anndata_obj, mt_exp_lvl_threshold, gene_exp_threshold, sorti
     # gene_exp_threshold.
     #
     # Repeat for each sorted DataFrame.
-    gene_filtered_df = mt_filtered_df[mt_filtered_df.iloc[:,gene_col] < gene_exp_threshold]
+    gene_filtered_df = mt_filtered_df[mt_filtered_df.iloc[:,gene_col] > gene_exp_threshold]
+    # Save final to a dictionary to pass out for further storage
+    results_dict = {}
+    results_dict[func_name] = gene_filtered_df
+
+
+    print("Filtered by gene-expression level threshold")
+    print("Final size is", gene_filtered_df.shape[0], "rows and ", gene_filtered_df.shape[1], "columns")
+    print(gene_filtered_df.iloc[:5,:3])
     # ============================================================
     # 8. RETURN RESULTS
     # ============================================================
@@ -93,7 +94,7 @@ def filter_mt_cells(anndata_obj, mt_exp_lvl_threshold, gene_exp_threshold, sorti
 
     # Possible structure:
     #
-    return gene_filtered_df, timing_dict
+    return results_dict, timing_dict
     #     "filtered_data": ...,
     #     "mt_sort_times": mt_sort_times,
     #     "gene_sort_times": gene_sort_times
@@ -117,9 +118,9 @@ def main():
     # ============================================================
     # LIST OF SORTING METHODS TO USE
     # ============================================================
-    #sorting_functions = [quick_sort_rec, selection_sort_iter,
-     #                  selection_sort_rec, insert_sort_iter, insert_sort_rec]
-    sorting_functions = [quick_sort_iter]
+    sorting_functions = [quick_sort_rec, selection_sort_iter,
+                      selection_sort_rec, insert_sort_iter, insert_sort_rec]
+
     # ============================================================
     # RUN FILTER
     # ============================================================
