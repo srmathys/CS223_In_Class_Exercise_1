@@ -1,9 +1,12 @@
 # MODULE NAME:  util_funs.py
 
 # IMPORTS
-import functools
+from functools import wraps
 import time
 import timeit
+
+from numba.cuda.cudadecl import func
+
 
 """ This section contains two different versions/ways to measure the
     execution time of functions or code snippits.    
@@ -27,28 +30,58 @@ import timeit
         (https://pymotw.com/3/timeit/)
 """
 
-# CUSTOME DECODER: timer_decorator
-def timer_decorator(func):
-    """A decorator that prints the execution time of a function."""
+# CUSTOM DECODER: timer_decorator
+# def timer_decorator(func):
+#     """A decorator that prints the execution time of a function."""
+#
+#     @functools.wraps(func)
+#     def wrapper(*args, **kwargs):
+#         # Start the high-precision performance counter
+#         if not hasattr(wrapper, 'depth'):
+#             wrapper.depth = 0
+#         if wrapper.depth == 0:
+#             start_time = time.perf_counter()
+#         try:
+#             # Execute the actual function
+#             return func(*args, **kwargs)
+#         finally:
+#             wrapper.depth -=1
+#             if wrapper.depth == 0:
+#         # Calculate elapsed time
+#                 end_time = time.perf_counter()
+#                 execution_time = end_time - start_time
+#                 print(f"Function '{func.__name__}' executed in {execution_time:.6f} seconds.")
+#
+#                 if func.__name__ not in execution_log:
+#                     execution_log[func.__name__] = []
+#                 execution_log[func.__name__].append(execution_time)
+#
+#     return wrapper
 
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        # Start the high-precision performance counter
+
+class timer_decorator:
+    def __init__(self, func):
+        self.func = func
+        self._active = False
+        wraps(func)(self)  # Preserves function metadata
+
+    def __call__(self, *args, **kwargs):
+        # If already inside a recursive chain, just execute the function
+        if self._active:
+            return self.func(*args, **kwargs)
+
+        # Outer call: start timing
+        self._active = True
         start_time = time.perf_counter()
-
-        # Execute the actual function
-        result = func(*args, **kwargs)
-
-        # Calculate elapsed time
-        end_time = time.perf_counter()
-        execution_time = end_time - start_time
-
-        print(f"Function '{func.__name__}' executed in {execution_time:.6f} seconds.")
-        return result
-
-    return wrapper
-
-
+        try:
+            return self.func(*args, **kwargs)
+        finally:
+            # End timing and reset state
+            end_time = time.perf_counter()
+            self._active = False
+            execution_time = end_time - start_time
+            print(f"{self.func.__name__} total execution time: {execution_time:.6f} seconds")
+            return execution_time #understand dangerous, but unsure how to otherwise pull it
 ###
 # Make sure this module is imported
 if __name__ == '__main__':
