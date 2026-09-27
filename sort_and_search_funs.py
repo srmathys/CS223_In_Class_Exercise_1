@@ -94,8 +94,27 @@ def selection_sort_rec(A,col = 0,asc = True, i = 0):
 
 
 #@ timer_decorator
-#def quick_sort_iter(A: pd.DataFrame,col: int,asc = True):
-#
+def quick_sort_iter(A: pd.DataFrame,col: int,asc = True):
+Iterative sorting using quicksort
+    high = A.iloc[:,col].size -1
+    if low < high:
+        #integrate lomuto partitioning
+        pivot_val = A.iat[high,col] #value of the last element for pivot
+        i = low
+        if asc == True: #allows for both types of sorting
+            for j in range(low, high):
+                if A.iat[j,col]<= pivot_val:
+                    A.iloc[[j,i]] = A.iloc[[i,j]].values
+                    i += 1
+        else:
+            for j in range(low, high):
+                if A.iat[j,col]>= pivot_val:
+                    A.iloc[[j,i]] = A.iloc[[i,j]].values
+                    i += 1
+        A.iloc[[high,i]] = A.iloc[[i,high]].values
+
+        quick_sort_rec(A,col,low,i-1,asc)
+        quick_sort_rec(A,col, i+1,high,asc)
 #
 #
 #
