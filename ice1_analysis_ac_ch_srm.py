@@ -4,7 +4,8 @@
 from sort_and_search_funs import *
 from util_funs import *
 import pandas as pd
-
+import matplotlib.pyplot as plt
+import plotly.express as px
 import anndata as ad
 
 
@@ -35,7 +36,7 @@ def filter_mt_cells(anndata_obj, mt_exp_lvl_threshold, gene_exp_threshold, sorti
     # ============================================================
     # Sets up a timing dictionary with nested values for accessing later
     timing_dict[func_name] = {}
-    timing_dict[func_name]["mt_sort_times"]= sorting_func(working_df, mt_col, asc = False)
+    timing_dict[func_name]["mt sort times"]= sorting_func(working_df, mt_col, asc = False)
     # no need to return a dataframe as the changes are reflected
     print("Sorted by mitochondrial expression level")
     print("dataframe has size of", working_df.shape[0], "rows and ", working_df.shape[1], "columns")
@@ -60,7 +61,7 @@ def filter_mt_cells(anndata_obj, mt_exp_lvl_threshold, gene_exp_threshold, sorti
     # Each algorithm now sorts its corresponding filtered
     # DataFrame using gene_col.
 
-    timing_dict[func_name]["gene_sort_times"] = sorting_func(mt_filtered_df,
+    timing_dict[func_name]["gene sort times"] = sorting_func(mt_filtered_df,
                                                                           gene_col, asc=True)
     print("Sorted by gene-expression levels")
     print("Dataframe has size of", mt_filtered_df.shape[0], "rows and ", mt_filtered_df.shape[1], "columns")
@@ -133,9 +134,29 @@ def main():
         timing_dict.update(timings)
 
     timings_df = pd.DataFrame.from_dict(timing_dict, orient = 'index')
+    timings_df.index.name = "sorting function"
     print(timings_df)
 
+    #Create a tidy dataframe for plotting
+    tidy_df = pd.melt(timings_df.reset_index(),
+        id_vars = "sorting function",
+        value_vars = ['mt sort times', 'gene sort times'],
+        var_name = "sorting step",
+        value_name = "time"
+    )
 
+    fig = px.bar(
+        tidy_df,
+        x = "sorting step",
+        y = "time",
+        color = "sorting function",
+        barmode = "group",
+        title = "Sorting Function Efficiency by Task",
+        labels={"sorting step":"Sorting Step", "time":"Time (s)", "sorting function":"Sorting Function"},
+        text_auto = '.2e'
+    )
+    fig.update_traces(textposition='outside')
+    fig.show()
     #results = filter_mt_cells(
     #    adata,
     #    mt_exp_lvl_threshold=0.10,   # temporary test value
