@@ -81,7 +81,8 @@ class timer_decorator:
             self._active = False
             execution_time = end_time - start_time
             print(f"{self.func.__name__} total execution time: {execution_time:.6f} seconds")
-            return execution_time #understand dangerous, but unsure how to otherwise pull it
+            return execution_time
+            #understand dangerous, but unsure how to otherwise pull it
 ###
 # Make sure this module is imported
 if __name__ == '__main__':

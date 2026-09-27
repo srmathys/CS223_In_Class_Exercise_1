@@ -93,28 +93,49 @@ def selection_sort_rec(A,col = 0,asc = True, i = 0):
 #def merge_sort_rec(A: pd.DataFrame,col: int,asc = True):
 
 
-#@ timer_decorator
-def quick_sort_iter(A: pd.DataFrame,col: int,asc = True):
-Iterative sorting using quicksort
-    high = A.iloc[:,col].size -1
-    if low < high:
-        #integrate lomuto partitioning
+@ timer_decorator
+def quick_sort_iter(A ,col ,low =0,high = None, asc = True):
+#Iterative sorting using quicksort
+    if high is None:
+        high = A.iloc[:,col].size -1
+
+    size = high - low + 1
+    stack = [0]*size
+    stack[0] = low
+    stack[1]= high
+    top = 1
+
+    while top >= 0:
+        high = stack[top]
+        low = stack[top -1]
+        top-=2
+
         pivot_val = A.iat[high,col] #value of the last element for pivot
-        i = low
+        i = low - 1
         if asc == True: #allows for both types of sorting
             for j in range(low, high):
                 if A.iat[j,col]<= pivot_val:
-                    A.iloc[[j,i]] = A.iloc[[i,j]].values
                     i += 1
+                    A.iloc[[i,j]] = A.iloc[[j,i]].values
+
         else:
             for j in range(low, high):
                 if A.iat[j,col]>= pivot_val:
-                    A.iloc[[j,i]] = A.iloc[[i,j]].values
                     i += 1
-        A.iloc[[high,i]] = A.iloc[[i,high]].values
+                    A.iloc[[i,j]] = A.iloc[[j,i]].values
 
-        quick_sort_rec(A,col,low,i-1,asc)
-        quick_sort_rec(A,col, i+1,high,asc)
+        A.iloc[[i+1,high]] = A.iloc[[high,i+1]].values
+        pivot_index = i + 1
+
+        if pivot_index - 1 > 1:
+            stack[top +1] = low
+            stack[top +2] = pivot_index - 1
+            top += 2
+
+        if pivot_index + 1 < high:
+            stack[top + 1] = pivot_index + 1
+            stack[top + 2] = high
+            top += 2
 #
 #
 #
