@@ -1,0 +1,40 @@
+def merge_sort_rec(A: pd.DataFrame, col: int, asc: bool = True):
+    if len(A) <= 1:
+        return A
+
+    #split array in half
+    mid = len(A) // 2
+    left_half = A.iloc[:mid]
+    right_half = A.iloc[mid:]
+
+    merge_sort_rec(left_half, col, asc)
+    merge_sort_rec(right_half, col, asc)
+
+    i = j = k = 0
+
+    #recursively sorting
+    while i < len(left_half) and j < len(right_half):
+        left_val = left_half.iat[i, col]
+        right_val = right_half.iat[j, col]
+
+        if (asc and left_val <= right_val) or (not asc and left_val >= right_val):
+            A.iloc[k] = left_half.iloc[i].values
+            i += 1
+        else:
+            A.iloc[k] = right_half.iloc[j].values
+            j += 1
+        k += 1
+
+    while i < len(left_half):
+        A.iloc[k] = left_half.iloc[i].values
+        i += 1
+        k += 1
+
+    while j < len(right_half):
+        A.iloc[k] = right_half.iloc[j].values
+        j += 1
+        k += 1
+
+    return A
+
+
