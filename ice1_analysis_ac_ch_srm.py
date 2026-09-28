@@ -7,9 +7,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import plotly.express as px
 import anndata as ad
+import timeit
 
-
-def filter_mt_cells(anndata_obj, mt_exp_lvl_threshold, gene_exp_threshold, sorting_func):
+def filter_mt_cells(anndata_obj, mt_exp_lvl_threshold, gene_exp_threshold, sorting_func = "None"):
     # Adding some things to just make it more useful overall, even though it's not exactly what is asked
 
     # ============================================================
@@ -23,7 +23,11 @@ def filter_mt_cells(anndata_obj, mt_exp_lvl_threshold, gene_exp_threshold, sorti
     gene_col = 1 # column for genes expressed.
 
     timing_dict = {}
-    func_name = sorting_func.__name__
+    if sorting_func =="None":
+        func_name = "None"
+    else:
+        func_name = sorting_func.__name__
+    print ("\nRunning sorting function:", func_name)
     print("Initial Data frame with ", working_df.shape[0], "rows and ", working_df.shape[1], "columns")
     print(working_df.iloc[:5,:3])
 
@@ -35,8 +39,14 @@ def filter_mt_cells(anndata_obj, mt_exp_lvl_threshold, gene_exp_threshold, sorti
     # 3. SAVE MITOCHONDRIAL SORT TIMINGS
     # ============================================================
     # Sets up a timing dictionary with nested values for accessing later
-    timing_dict[func_name] = {}
-    timing_dict[func_name]["mt sort times"]= sorting_func(working_df, mt_col, asc = False)
+    if func_name == "None":
+        timing_dict[func_name] = {}
+        timing_dict[func_name]["mt sort times"] = None
+        working_df.sort_values(by=working_df.columns[mt_col],ascending=False,inplace=True)
+
+    else:
+        timing_dict[func_name] = {}
+        timing_dict[func_name]["mt sort times"]= sorting_func(working_df, mt_col, asc = False)
     # no need to return a dataframe as the changes are reflected
     print("Sorted by mitochondrial expression level")
     print("dataframe has size of", working_df.shape[0], "rows and ", working_df.shape[1], "columns")
@@ -61,7 +71,13 @@ def filter_mt_cells(anndata_obj, mt_exp_lvl_threshold, gene_exp_threshold, sorti
     # Each algorithm now sorts its corresponding filtered
     # DataFrame using gene_col.
 
-    timing_dict[func_name]["gene sort times"] = sorting_func(mt_filtered_df,
+    if func_name == "None":
+        timing_dict[func_name]["gene sort times"] = None
+        mt_filtered_df.sort_values(by=mt_filtered_df.columns[gene_col],ascending=True,inplace=True)
+
+    else:
+
+        timing_dict[func_name]["gene sort times"] = sorting_func(mt_filtered_df,
                                                                           gene_col, asc=True)
     print("Sorted by gene-expression levels")
     print("Dataframe has size of", mt_filtered_df.shape[0], "rows and ", mt_filtered_df.shape[1], "columns")
@@ -119,8 +135,7 @@ def main():
     # ============================================================
     # LIST OF SORTING METHODS TO USE
     # ============================================================
-    sorting_functions = [quick_sort_rec, selection_sort_iter,
-                      selection_sort_rec, insert_sort_iter, insert_sort_rec]
+    sorting_functions = [insert_sort_iter, insert_sort_rec]
 
     # ============================================================
     # RUN FILTER

@@ -2,43 +2,62 @@
 # Sort and search functions
 import pandas as pd
 
+
 from util_funs import timer_decorator
 
 
 # note: A.iat gets a single value using integer positioning in pandas
 @ timer_decorator
-def insert_sort_iter(A,col = 0,asc = True): #A is a dataframe, col is number
-    for i in range(1,A.iloc[:,col].size):
-        key = A.iat[i,col]
+def insert_sort_iter(A,col,asc = True): #A is a dataframe, col is number
+    size = A.iloc[:,col].size
+    if size <= 1:
+        return
+
+    index_guide = list(range(size))
+    # Shifting values in a premade list in order to track where insertions are happening
+
+    for i in range(1,size):
         j = i - 1
-    if asc == True:
-        while j >= 0 and key < A.iat[j,col]:
-            A.iloc[[j+1,j]] = A.loc[[j,j+1]].values #if key is less than swap
-            j -= 1
-    else:
-        while j >= 0 and key > A.iat[j,col]:
-            A.iloc[[j+1,j]] = A.loc[[j,j+1]].values
-            j -= 1
-# limitations: I don't know how to shift in pandas the way it would be done in a list
+        key = index_guide[i]
+        if asc == True:
+            while j >= 0 and A.iat[i,col] < A.iat[index_guide[j],col]:
+                index_guide[j+1] = index_guide[j] #if key is less than swap
+                j -= 1
+            index_guide[j + 1] = key
+        else:
+            while j >= 0 and A.iat[i, col] > A.iat[index_guide[j], col]:
+                index_guide[j + 1] = index_guide[j]  # if key is less than swap
+                j -= 1
+            index_guide[j + 1] = key
+    # Reorder the
+    A.iloc[list(range(size))] = A.iloc[index_guide].values
+
 
 @ timer_decorator
-def insert_sort_rec(A: pd.DataFrame,col: int,n = None,asc = True):
+def insert_sort_rec(A: pd.DataFrame,col,n = None,asc = True):
     if n is None:
       n = A.iloc[:,col].size #allows for dynamic sizing
-    if n < 1:
+    if n <= 1:
         return # done with recursing
     #start recursions
     insert_sort_rec(A,col,n-1, asc)
-    key = A.iat[n-1, col]
+
+    key_row = A.iloc[n-1].copy()
+    key_val = key_row.iloc[col]
+
     j = n - 2
-    if asc == True: #setting the movements
-        while j >= 0 and key < A.iat[j,col]:
-            A.iloc[[j+1,j]] = A.iloc[[j,j+1]].values # if key is less than swap
+    if asc == True:
+        while j >= 0 and key_val < A.iat[j, col]:
+            A.iloc[j + 1] = A.iloc[j]  # if key is less than swap
             j -= 1
+
+        A.loc[j + 1] = key_row
     else:
-        while j >= 0 and key > A.iat[j,col]:
-            A.iloc[[j+1,j]] = A.iloc[[j,j+1]].values
-            j-= 1
+        while j >= 0 and key_val > A.iat[j, col]:
+            A.iloc[j + 1] = A.iloc[j]  # if key is less than swap
+            j -= 1
+
+        A.loc[j + 1] = key_row
 
 
 
@@ -85,93 +104,106 @@ def selection_sort_rec(A,col = 0,asc = True, i = 0):
             selection_sort_rec(A,col, asc = False, i = i+1)
 
 
-#@ timer_decorator
-#def merge_sort_iter(A: pd.DataFrame,col: int,asc = True):
+### Helper functions for Quicksort ###
+def median_of_three(A, col, low, high, asc = True):
+    #### Using Median of Three instead of Lomuto Partitioning ###
+    mid = low + (high - low) // 2
+    # sorting the low, mid and high positions in place
+    if asc == True:
+        if A.iat[high,col] < A.iat[low,col]:
+            A.iloc[[low, high]] = A.iloc[[high, low]].values
+        if A.iat[mid,col] < A.iat[low,col]:
+            A.iloc[[low, mid]] = A.iloc[[mid, low]].values
+        if A.iat[high,col] < A.iat[mid,col]:
+            A.iloc[[mid,high]] = A.iloc[[high, mid]].values
+        A.iloc[[mid,high]] = A.iloc[[high, mid]].values
+        return A.iat[high,col]
+    else:
+        if A.iat[high,col] > A.iat[low,col]:
+            A.iloc[[low, high]] = A.iloc[[high, low]].values
+        if A.iat[mid,col] > A.iat[low,col]:
+            A.iloc[[low, mid]] = A.iloc[[mid, low]].values
+        if A.iat[high,col] > A.iat[mid,col]:
+            A.iloc[[mid,high]] = A.iloc[[high, mid]].values
+        A.iloc[[mid,high]] = A.iloc[[high, mid]].values
+        return A.iat[high,col]
 
-
-#@ timer_decorator
-#def merge_sort_rec(A: pd.DataFrame,col: int,asc = True):
-
+def partition(A, col, low, high, asc = True):
+    ### Helper for Quicksort on partitioning ###
+    pivot_val = median_of_three(A,col, low, high, asc)
+    i = low - 1
+    if asc == True:
+        for j in range(low, high):
+            if A.iat[j,col] <= pivot_val:
+                i += 1
+                A.iloc[[i,j]] = A.iloc[[j,i]].values
+        A.iloc[[i+1,high]] = A.iloc[[high, i+1]].values
+        return i + 1
+    else:
+        for j in range(low, high):
+            if A.iat[j,col] >= pivot_val:
+                i += 1
+                A.iloc[[i, j]] = A.iloc[[j, i]].values
+        A.iloc[[i + 1, high]] = A.iloc[[high, i + 1]].values
+        return i + 1
 
 @ timer_decorator
-def quick_sort_iter(A ,col ,low =0,high = None, asc = True):
+def quick_sort_iter(A ,col, asc = True):
 #Iterative sorting using quicksort
-    if high is None:
-        high = A.iloc[:,col].size -1
+    low = 0
+    high = A.iloc[:,col].size -1
 
+    #### Creating initial stack size
     size = high - low + 1
     stack = [0]*size
+
+    ### pushing initial values into the stack
     stack[0] = low
     stack[1]= high
     top = 1
 
     while top >= 0:
+        ### setting this back
         high = stack[top]
         low = stack[top -1]
         top-=2
 
-        pivot_val = A.iat[high,col] #value of the last element for pivot
-        i = low - 1
-        if asc == True: #allows for both types of sorting
-            for j in range(low, high):
-                if A.iat[j,col]<= pivot_val:
-                    i += 1
-                    A.iloc[[i,j]] = A.iloc[[j,i]].values
+        if low < high:
+            #
+            p = partition(A, col, low, high, asc)
+    # Try to grab the larger size of the partition to deal with first
+            left_side_size = p - 1 - low
+            right_side_size = high - p + 1
 
-        else:
-            for j in range(low, high):
-                if A.iat[j,col]>= pivot_val:
-                    i += 1
-                    A.iloc[[i,j]] = A.iloc[[j,i]].values
-
-        A.iloc[[i+1,high]] = A.iloc[[high,i+1]].values
-        pivot_index = i + 1
-
-        if pivot_index - 1 > 1:
-            stack[top +1] = low
-            stack[top +2] = pivot_index - 1
-            top += 2
-
-        if pivot_index + 1 < high:
-            stack[top + 1] = pivot_index + 1
-            stack[top + 2] = high
-            top += 2
-#
-#
-#
-#
+            if left_side_size > right_side_size:
+    # This means left is the bigger side of the partition
+                if p - 1 > low:
+                    top += 1; stack[top] = low
+                    top += 1; stack[top] = p -1
+                if p + 1 < high:
+                    top += 1; stack[top] = p + 1
+                    top += 1; stack[top] = high
+            else:
+    # This means right side is bigger or they are the same size
+                if p + 1 < high:
+                    top += 1; stack[top] = p + 1
+                    top += 1; stack[top] = high
+                if p-1 > low:
+                    top += 1; stack[top] = low
+                    top += 1; stack[top] = p - 1
 
 
 @ timer_decorator
 def quick_sort_rec(A,col,low = 0, high = None ,asc = True):
-#Recursively sorting using quicksort
     if high is None:
         high = A.iloc[:,col].size -1
     if low < high:
-        #integrate lomuto partitioning
-        pivot_val = A.iat[high,col] #value of the last element for pivot
-        i = low
-        if asc == True: #allows for both types of sorting
-            for j in range(low, high):
-                if A.iat[j,col]<= pivot_val:
-                    A.iloc[[j,i]] = A.iloc[[i,j]].values
-                    i += 1
-        else:
-            for j in range(low, high):
-                if A.iat[j,col]>= pivot_val:
-                    A.iloc[[j,i]] = A.iloc[[i,j]].values
-                    i += 1
-        A.iloc[[high,i]] = A.iloc[[i,high]].values
+        pivot_loc = partition(A, col, low, high, asc)
 
-        quick_sort_rec(A,col,low,i-1,asc)
-        quick_sort_rec(A,col, i+1,high,asc)
-
-#@ timer_decorator
-#def bin_search_iter(A: pd.DataFrame,col: int,asc = True):
+        quick_sort_rec(A,col,low, pivot_loc-1, asc)
+        quick_sort_rec(A,col,pivot_loc+1, high, asc)
 
 
-#@ timer_decorator
-#def bin_search_rec(A: pd.DataFrame,col: int,asc = True):
 
 if __name__ == "__main__":
     print("<module name> : Is intended to be imported and not executed.")
