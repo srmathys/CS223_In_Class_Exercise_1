@@ -5,7 +5,6 @@ from functools import wraps
 import time
 import timeit
 
-from numba.cuda.cudadecl import func
 
 
 """ This section contains two different versions/ways to measure the

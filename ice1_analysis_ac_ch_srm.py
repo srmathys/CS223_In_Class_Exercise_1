@@ -2,12 +2,13 @@
 # ice1_analysis
 
 from sort_and_search_funs import *
-from util_funs import *
 import pandas as pd
 import matplotlib.pyplot as plt
 import plotly.express as px
 import anndata as ad
 import timeit
+import sys
+
 
 def filter_mt_cells(anndata_obj, mt_exp_lvl_threshold, gene_exp_threshold, sorting_func = "None"):
     # Adding some things to just make it more useful overall, even though it's not exactly what is asked
@@ -28,7 +29,7 @@ def filter_mt_cells(anndata_obj, mt_exp_lvl_threshold, gene_exp_threshold, sorti
     else:
         func_name = sorting_func.__name__
     print ("\nRunning sorting function:", func_name)
-    print("Initial Data frame with ", working_df.shape[0], "rows and ", working_df.shape[1], "columns")
+    print("\nInitial Data frame with ", working_df.shape[0], "rows and ", working_df.shape[1], "columns")
     print(working_df.iloc[:5,:3])
 
 
@@ -48,7 +49,7 @@ def filter_mt_cells(anndata_obj, mt_exp_lvl_threshold, gene_exp_threshold, sorti
         timing_dict[func_name] = {}
         timing_dict[func_name]["mt sort times"]= sorting_func(working_df, mt_col, asc = False)
     # no need to return a dataframe as the changes are reflected
-    print("Sorted by mitochondrial expression level")
+    print("\nSorted by mitochondrial expression level")
     print("dataframe has size of", working_df.shape[0], "rows and ", working_df.shape[1], "columns")
     print(working_df.iloc[:5,:3])
     # ============================================================
@@ -59,7 +60,7 @@ def filter_mt_cells(anndata_obj, mt_exp_lvl_threshold, gene_exp_threshold, sorti
     # mt_exp_lvl_threshold.
     # assumes that there are no values under 0
     mt_filtered_df = working_df[working_df.iloc[:,mt_col] < mt_exp_lvl_threshold]
-    print("filtered by mitochondrial expression level threshold")
+    print("\nfiltered by mitochondrial expression level threshold")
     print("New size is", mt_filtered_df.shape[0], "rows and ", mt_filtered_df.shape[1], "columns")
     print(mt_filtered_df.iloc[:5,:3])
     # ============================================================
@@ -79,7 +80,7 @@ def filter_mt_cells(anndata_obj, mt_exp_lvl_threshold, gene_exp_threshold, sorti
 
         timing_dict[func_name]["gene sort times"] = sorting_func(mt_filtered_df,
                                                                           gene_col, asc=True)
-    print("Sorted by gene-expression levels")
+    print("\nSorted by gene-expression levels")
     print("Dataframe has size of", mt_filtered_df.shape[0], "rows and ", mt_filtered_df.shape[1], "columns")
     print(mt_filtered_df.iloc[:5,:3])
 
@@ -135,7 +136,11 @@ def main():
     # ============================================================
     # LIST OF SORTING METHODS TO USE
     # ============================================================
-    sorting_functions = [insert_sort_iter, insert_sort_rec]
+    sorting_functions = [insert_sort_iter, insert_sort_rec, selection_sort_iter, selection_sort_rec,
+                         merge_sort_iter, merge_sort_rec, quick_sort_iter, quick_sort_rec]
+    ## required for insert sort recursion to work
+
+    sys.setrecursionlimit(2000)
 
     # ============================================================
     # RUN FILTER
