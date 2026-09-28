@@ -2,19 +2,19 @@
 # Sort and search functions
 import pandas as pd
 from util_funs import timer_decorator
-
+import sys
 
 # note: A.iat gets a single value using integer positioning in pandas
 @ timer_decorator
 def insert_sort_iter(A,col,asc = True): #A is a dataframe, col is number
-    size = A.iloc[:,col].size
-    if size <= 1:
+    n = len(A)
+    if n <= 1:
         return
 
-    index_guide = list(range(size))
+    index_guide = list(range(n))
     # Shifting values in a premade list in order to track where insertions are happening
 
-    for i in range(1,size):
+    for i in range(1,n):
         j = i - 1
         key = index_guide[i]
         if asc == True:
@@ -28,33 +28,39 @@ def insert_sort_iter(A,col,asc = True): #A is a dataframe, col is number
                 j -= 1
             index_guide[j + 1] = key
     # Reorder the
-    A.iloc[list(range(size))] = A.iloc[index_guide].values
+    A.iloc[:] = A.iloc[index_guide].values
 
 
 @timer_decorator
-def insert_sort_rec(A: pd.DataFrame, col, n=None, asc=True):
+def insert_sort_rec(A, col, n=None, index_guide = None, asc=True):
+
     if n is None:
-        n = A.iloc[:, col].size # allows for dynamic sizing
+        n = len(A) # allows for dynamic sizing
+    if index_guide is None:
+        index_guide = list(range(n))
     if n <= 1:
-        return  # done with recursing
+        return  index_guide
     # start recursions
-    insert_sort_rec(A, col, n - 1, asc)
-    index_guide = list(range(n))
-    key = index_guide[n-1]
+    # sending an index guide to do the final swap only once.
+    index_guide = insert_sort_rec(A, col, n = n - 1, index_guide = index_guide, asc= asc)
+    key_index = index_guide[n-1]
+    key_val = A.iat[key_index,col]
     j = n - 2
 
     if asc == True:
-        while j >= 0 and A.iat[key, col] < A.iat[index_guide[j], col]:
+        while j >= 0 and key_val < A.iat[index_guide[j], col]:
             index_guide[j + 1] = index_guide[j]  # if key is less than swap
             j -= 1
-        index_guide[j + 1] = key
-    else:
-        while j >= 0 and A.iat[key, col] > A.iat[index_guide[j], col]:
-            index_guide[j + 1] = index_guide[j]  # if key is less than swap
-            j -= 1
-        index_guide[j + 1] = key
 
-    A.iloc[list(range(n))] = A.iloc[index_guide].values
+    else:
+        while j >= 0 and key_val > A.iat[index_guide[j], col]:
+            index_guide[j + 1] = index_guide[j]  # if key is less than swap
+            j -= 1
+    index_guide[j + 1] = key_index
+## only swaps at end
+    if n == len(A):
+        A[:] = A.iloc[index_guide].values
+    return index_guide # So that it's using the same guide for the entire time
 
 
 
