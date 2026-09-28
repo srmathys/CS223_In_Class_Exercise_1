@@ -206,6 +206,100 @@ def quick_sort_rec(A,col,low = 0, high = None ,asc = True):
         quick_sort_rec(A,col,low, pivot_loc-1, asc)
         quick_sort_rec(A,col,pivot_loc+1, high, asc)
 
+# Merge Sort Helper Function
+
+def merge(A: pd.DataFrame, col: int, left: int, middle: int, right: int, asc=True):
+    n1 = middle - left + 1
+    n2 = right - middle
+
+    # Use .copy() so changes to A don't alter these mid-operation
+    left_array = A.iloc[left: left + n1].copy()
+    right_array = A.iloc[middle + 1: middle + 1 + n2].copy()
+
+    i = j = 0
+    k = left
+
+    while i < n1 and j < n2:
+        val_left = left_array.iloc[i, col]
+        val_right = right_array.iloc[j, col]
+
+        # Handle ascending vs descending comparison
+        condition = (val_left <= val_right) if asc else (val_left >= val_right)
+
+        if condition:
+            A.iloc[k] = left_array.iloc[i]
+            i += 1
+        else:
+            A.iloc[k] = right_array.iloc[j]
+            j += 1
+        k += 1
+
+    while i < n1:
+        A.iloc[k] = left_array.iloc[i]
+        i += 1
+        k += 1
+
+    while j < n2:
+        A.iloc[k] = right_array.iloc[j]
+        j += 1
+        k += 1
+
+@ timer_decorator
+def merge_sort_iter(A: pd.DataFrame, col: int, asc=True):
+    n = len(A)
+    curr_size = 1
+
+    while curr_size < n:
+        left_start = 0
+        while left_start < n - 1:
+            mid = min(left_start + curr_size - 1, n - 1)
+            right_end = min(left_start + 2 * curr_size - 1, n - 1)
+
+            # Pass col and asc down to the merge function
+            merge(A, col, left_start, mid, right_end, asc)
+            left_start += 2 * curr_size
+
+        curr_size *= 2
+
+@ timer_decorator
+def merge_sort_rec(A: pd.DataFrame, col: int, asc: bool = True):
+    if len(A) <= 1:
+        return A
+
+    #split array in half
+    mid = len(A) // 2
+    left_half = A.iloc[:mid]
+    right_half = A.iloc[mid:]
+
+    merge_sort_rec(left_half, col, asc)
+    merge_sort_rec(right_half, col, asc)
+
+    i = j = k = 0
+
+    #recursively sorting
+    while i < len(left_half) and j < len(right_half):
+        left_val = left_half.iat[i, col]
+        right_val = right_half.iat[j, col]
+
+        if (asc and left_val <= right_val) or (not asc and left_val >= right_val):
+            A.iloc[k] = left_half.iloc[i].values
+            i += 1
+        else:
+            A.iloc[k] = right_half.iloc[j].values
+            j += 1
+        k += 1
+
+    while i < len(left_half):
+        A.iloc[k] = left_half.iloc[i].values
+        i += 1
+        k += 1
+
+    while j < len(right_half):
+        A.iloc[k] = right_half.iloc[j].values
+        j += 1
+        k += 1
+
+    return A
 ### Search Algorithms ###
 
 def bin_search_iter(A,v):
