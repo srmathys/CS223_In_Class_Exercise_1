@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 import plotly.express as px
 import anndata as ad
 import timeit
+import sys
+
 
 def filter_mt_cells(anndata_obj, mt_exp_lvl_threshold, gene_exp_threshold, sorting_func = "None"):
     # Adding some things to just make it more useful overall, even though it's not exactly what is asked
@@ -136,6 +138,8 @@ def main():
     # LIST OF SORTING METHODS TO USE
     # ============================================================
     sorting_functions = [insert_sort_iter, insert_sort_rec]
+    ## required for insert sort recursion to work
+    sys.setrecursionlimit(2000)
 
     # ============================================================
     # RUN FILTER
