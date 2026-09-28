@@ -1,8 +1,6 @@
 #  coding: utf-8
 # Sort and search functions
 import pandas as pd
-
-
 from util_funs import timer_decorator
 
 
@@ -33,66 +31,30 @@ def insert_sort_iter(A,col,asc = True): #A is a dataframe, col is number
     A.iloc[list(range(size))] = A.iloc[index_guide].values
 
 
-def bin_search_iter(A,v):
-  """Return the index of v in sorted list A, or None if v is absent."""
-    low = 0
-    high = len(A) - 1
-
-    while low <= high:
-        mid = (low + high) // 2
-
-        if A[mid] == v:
-            return mid
-        elif A[mid] < v:
-            low = mid + 1
-        else:
-            high = mid - 1
-
-    return None
-
-def bin_search_rec(A,v):
-  """Return the index of v in sorted list A, or None if v is absent."""
-
-    def search(low, high):
-        if low > high:
-            return None
-
-        mid = (low + high) // 2
-
-        if A[mid] == v:
-            return mid
-        elif A[mid] < v:
-            return search(mid + 1, high)
-        else:
-            return search(low, mid - 1)
-
-    return search(0, len(A) - 1)
-  
-@ timer_decorator
-def insert_sort_rec(A: pd.DataFrame,col,n = None,asc = True):
+@timer_decorator
+def insert_sort_rec(A: pd.DataFrame, col, n=None, asc=True):
     if n is None:
-      n = A.iloc[:,col].size #allows for dynamic sizing
+        n = A.iloc[:, col].size # allows for dynamic sizing
     if n <= 1:
-        return # done with recursing
-    #start recursions
-    insert_sort_rec(A,col,n-1, asc)
-
-    key_row = A.iloc[n-1].copy()
-    key_val = key_row.iloc[col]
-
+        return  # done with recursing
+    # start recursions
+    insert_sort_rec(A, col, n - 1, asc)
+    index_guide = list(range(n))
+    key = index_guide[n-1]
     j = n - 2
+
     if asc == True:
-        while j >= 0 and key_val < A.iat[j, col]:
-            A.iloc[j + 1] = A.iloc[j]  # if key is less than swap
+        while j >= 0 and A.iat[key, col] < A.iat[index_guide[j], col]:
+            index_guide[j + 1] = index_guide[j]  # if key is less than swap
             j -= 1
-
-        A.loc[j + 1] = key_row
+        index_guide[j + 1] = key
     else:
-        while j >= 0 and key_val > A.iat[j, col]:
-            A.iloc[j + 1] = A.iloc[j]  # if key is less than swap
+        while j >= 0 and A.iat[key, col] > A.iat[index_guide[j], col]:
+            index_guide[j + 1] = index_guide[j]  # if key is less than swap
             j -= 1
+        index_guide[j + 1] = key
 
-        A.loc[j + 1] = key_row
+    A.iloc[list(range(n))] = A.iloc[index_guide].values
 
 
 
@@ -237,6 +199,48 @@ def quick_sort_rec(A,col,low = 0, high = None ,asc = True):
 
         quick_sort_rec(A,col,low, pivot_loc-1, asc)
         quick_sort_rec(A,col,pivot_loc+1, high, asc)
+
+### Search Algorithms ###
+
+def bin_search_iter(A,v):
+  ###Return the index of v in sorted list A, or None if v is absent."""
+    low = 0
+    high = len(A) - 1
+
+    while low <= high:
+        mid = (low + high) // 2
+
+        if A[mid] == v:
+            return mid
+        elif A[mid] < v:
+            low = mid + 1
+        else:
+            high = mid - 1
+
+    return None
+
+def bin_search_rec(A,v):
+  ###Return the index of v in sorted list A, or None if v is absent."""
+
+    def search(low, high):
+        if low > high:
+            return None
+
+        mid = (low + high) // 2
+
+        if A[mid] == v:
+            return mid
+        elif A[mid] < v:
+            return search(mid + 1, high)
+        else:
+            return search(low, mid - 1)
+
+    return search(0, len(A) - 1)
+
+
+
+
+
 
 
 
