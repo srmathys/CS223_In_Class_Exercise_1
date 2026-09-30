@@ -1,6 +1,7 @@
 #  coding: utf-8
 # Sort and search functions
 import pandas as pd
+import numpy as np
 from util_funs import timer_decorator
 import sys
 
@@ -27,7 +28,9 @@ def insert_sort_iter(A,col,asc = True):
     # Create a list of row indices
     # DataFrame rows are not moved during the sorting process
     index_guide = list(range(n))
-    # Shifting values in a premade list to track where insertions are happening
+    # using a value list for easy checking
+    vals = A.iloc[:,col].to_numpy()
+    # Shifting values in a premade list in order to track where insertions are happening
 
     # Begin at the second row because the first row is already sorted.
     for i in range(1,n):
@@ -35,23 +38,24 @@ def insert_sort_iter(A,col,asc = True):
         j = i - 1
         # Store the index of the row being inserted.
         key = index_guide[i]
+        # Using the index_guide
         if asc == True:
             # Shift the indices to the right while the value of the key is smaller than the value in the sorted portion.
-            while j >= 0 and A.iat[i,col] < A.iat[index_guide[j],col]:
-                # Shift the larger index one position to the right. 
+            while j >= 0 and vals[i] < vals[index_guide[j]]:
+      # Shift the larger index one position to the right. 
                 index_guide[j+1] = index_guide[j] #if key is less than swap
                 j -= 1
             # Insert the key index into its correct position. 
             index_guide[j + 1] = key
         else:
-            # Shift the indices to the right while the key's value is larger than the value in the sorted position.
-            while j >= 0 and A.iat[i, col] > A.iat[index_guide[j], col]:
-                # Shift the smaller index one position to the right.
+          # Shift the indices to the right while the key's value is larger than the value in the sorted position.
+            while j >= 0 and vals[i] > vals[index_guide[j]]:
+     # Shift the smaller index one position to the right.
                 index_guide[j + 1] = index_guide[j]  # if key is less than swap
                 j -= 1
             # Insert the key index into its correct descending order position. 
             index_guide[j + 1] = key
-    # Reorder the entire DataFrame using the completed index guide.
+    # Reorder the entire dataframe using the completed index guide
     A.iloc[:] = A.iloc[index_guide].values
 
 
@@ -62,11 +66,14 @@ def insert_sort_rec(A, col, n=None, index_guide = None, asc=True):
     # col: column position used for comparison
     # asc: should be True for ascending order, False for descending order
 
+    # pulling out a list of values for quick checking
+    vals = A.iloc[:,col].to_numpy()
     # If n was not given, use the full length of the DataFrame.
     if n is None:
         n = len(A) # allows for dynamic sizing
     # If no index guide exists, create one that contains all row indices.
     if index_guide is None:
+    # creating a guide list to help with reordering at the end
         index_guide = list(range(n))
     # Base Case: A prefix with 0 or 1 is already sorted.
     if n <= 1:
@@ -79,21 +86,21 @@ def insert_sort_rec(A, col, n=None, index_guide = None, asc=True):
     # The last row in the sorted prefix is the key to insert. 
     key_index = index_guide[n-1]
     # Store the value of the key from the selected column. 
-    key_val = A.iat[key_index,col]
-    # Begin comparing the key with the row immediately before it.
+    key_val = vals[key_index]
+  # Begin comparing the key with the row immediately before it.
     j = n - 2
 
     if asc == True:
-        # Shift indices to the right while the key is smaller than the values in the sorted prefix.
-        while j >= 0 and key_val < A.iat[index_guide[j], col]:
-            # Move the larger index one position to the right.
+      # Shift indices to the right while the key is smaller than the values in the sorted prefix.
+        while j >= 0 and key_val < vals[index_guide[j]]:
+           # Move the larger index one position to the right.
             index_guide[j + 1] = index_guide[j]  # if key is less than swap
             j -= 1
 
     else:
-        # Shift indices to the right while the key is larger than the values in the sorted prefix. 
-        while j >= 0 and key_val > A.iat[index_guide[j], col]:
-            # Move the smaller index position to the right.
+      # Shift indices to the right while the key is larger than the values in the sorted prefix. 
+        while j >= 0 and key_val > vals[index_guide[j]]:
+        # Move the smaller index position to the right.
             index_guide[j + 1] = index_guide[j]  # if key is less than swap
             j -= 1
     # Insert the key index into its correct position.
@@ -102,10 +109,9 @@ def insert_sort_rec(A, col, n=None, index_guide = None, asc=True):
     # DataFrame is reordered after the entire recursive process finishes,
     if n == len(A):
         A[:] = A.iloc[index_guide].values
-    # Return the index guide so every recursive call uses the same guide.
-    return index_guide # So that it's using the same guide the entire time
-
-
+        return
+  # Return the index guide so every recursive call uses the same guide if not on original stack
+    return index_guide # So that it's using the same guide for the entire time
 
 
 @timer_decorator
@@ -117,7 +123,12 @@ def selection_sort_iter(A,col = 0,asc = True):
     # asc: should be True for ascending order, False for descending order
 
     # Obtain the number of rows in the DataFrame
-    length = A.iloc[:,col].size
+    # Use them to create a guidance list for tracking index swaps
+    # Then pull values into a separate array for ease of lookups
+    length = len(A)
+    index = list(range(length))
+    vals = A.iloc[:,col].to_numpy()
+
     if asc == True:
         # Process every position except the final one
         # The final element should be in the correct position
@@ -132,13 +143,13 @@ def selection_sort_iter(A,col = 0,asc = True):
             for j in range(i+1,length):
 
                 # Update the min if a smaller value is found.
-                if A.iat[j,col] < A.iat[min,col]:
+                if vals[index[j]] < vals[index[min]]:
                     min = j
             # Exchange the selected minimum row with row i
             # Entire row is exchanged, not just the selected column
-            A.iloc[[i,min]] = A.iloc[[min,i]].values
+            index[i],index[min] = index[min], index[i]
     else:
-        # Descending-order version searches for the maximum.
+        # Descending-order version searches for the maximum. Otherwise same as above
         for i in range(length - 1): #same thing, but with max
             # Assume the first element in the unsorted portion is the largest element.
             max = i
@@ -147,196 +158,233 @@ def selection_sort_iter(A,col = 0,asc = True):
             for j in range(i+1,length):
 
                 # Update the max if a larger value is found. 
-                if A.iat[j,col] > A.iat[max,col]:
+                if vals[index[j]] > vals[index[max]]:
                     max = j
-            # Exchange the selected maximum row with row i
-            A.iloc[[i,max]] = A.iloc[[max,i]].values
+            index[i],index[max] = index[max], index[i]
+
+    # When done use the index guide that was made to place all values in the correct order
+    A.iloc[:] = A.iloc[index].values
 
 @ timer_decorator
-def selection_sort_rec(A,col = 0,asc = True, i = 0):
-    # Sort DataFrame using recursive selection sort.
-    # i = first position in the unsorted portion of the DataFrame
+def selection_sort_rec(A,col = 0,asc = True, index = None,  i = None):
+    # Goal: Sorting a DataFrame using recursive selection sort.
+    # A: DataFrame to sort
+    # col: column position used for comparison
+    # asc: should be True for ascending order, False for descending order
+    # index tracks an index guide around, i is the iteration point
 
-    # Number of rows in the DataFrame
-    length = A.iloc[:,col].size
+    # Obtain the number of rows in the DataFrame
+    length = len(A)
+    #Create list of values to compare
+    vals = A.iloc[:,col].to_numpy()
+    if i is None:
+        # setting up the index for the first one in the stack
+        index = list(range(length))
+        i = 0
+    else:
+        # pass through premade index guide on later loops
+        index = index
 
-    # If ascending is True, place the smallest value in the first unsorted position. 
     if asc == True:
-
-        # Assume the first position in the unsorted portion contains the minimum value. 
+        # finding the minimum element in the unsorted sublist from a dataframe column
+        # once found, it can be swapped with the index of i
+        # Assume that the first element in the unsorted portion is the smallest element.
         min = i
 
-        # Search the remaining unsorted rows for a smaller value.
         for j in range(i + 1, length):
-
-            # If a smaller index is found, store its row index. 
-            if A.iat[j, col] < A.iat[min, col]:
+            # Update the min if a smaller value is found.
+            if vals[index[j]] < vals[index[min]]:
                 min = j
-        # Swap the row at position i with the row containing the minimum value.
-        A.iloc[[i, min]] = A.iloc[[min, i]].values
-        
-        # If more than one unsorted row remains, recursively sort the remaining portion of the DataFrame
+        # Exchange the selected minimum row with row i
+        # Entire row is exchanged, not just the selected column
+        index[i],index[min] = index[min], index[i]
+
         if i+1 < length:
-            selection_sort_rec(A,col, asc = True, i = i+1)
-    # If asc is False, sort the DataFrame in descending order by placing the largest value in the unsorted position.
+        # if not all checked then just recurse through to make more stacks
+            index = selection_sort_rec(A,col, asc = asc, index= index, i = i+1)
+
+    # Used for descending sort, same as above but with max instead of min.
     else:
         # Assume the first position in the unsorted portion contains the maximum value
         max = i
 
         # Search the remaining unsorted rows for a larger value.
         for j in range(i + 1, length):
-
-            # If a larger value is found, store its row index.
-            if A.iat[j, col] > A.iat[max, col]:
+          # If a larger value is found, store its row index.
+            if vals[index[j]] > vals[index[max]]:
                 max = j
-        # Swap the row position at i with the row containing the maximum value.
-        A.iloc[[i, max]] = A.iloc[[max, i]].values
+      # Swap the index row position at i with the row containing the maximum value.
+        index[i],index[max] = index[max], index[i]
+      # If more than one unsorted row remains, recursively sort the remaining portion of the DataFrame. 
 
-        # If more than one unsorted row remains, recursively sort the remaining portion of the DataFrame. 
         if i+1 < length:
-            selection_sort_rec(A,col, asc = False, i = i+1)
-
+            index = selection_sort_rec(A,col, asc = asc, index = index, i =i+1)
+    if i > 0:
+        #allows for later loops to give returns and pass the index guide down
+        return index
+    # On final loop triggers this as i will be equal to 0
+    A.iloc[:] = A.iloc[index].values
 
 ### Helper functions for Quicksort ###
-def median_of_three(A, col, low, high, asc = True):
-    #### Using Median of Three instead of Lomuto Partitioning ###
+## Using the median of three pivoting  ##
+def median_of_three(vals, index, low, high, asc):
+    # Using Median of Three Pivot position
+    # Locations of low and high used to go through index_guide
+    # index guide used to call correct values from the dataframe to compare
+    # pass index guide through in order to save the changes
+
+
     mid = low + (high - low) // 2
     # sorting the low, mid and high positions in place
+    # One version if ascending order, one if not
+    # the swapping is done on the index guide, not on the real dataframe
     if asc == True:
-        if A.iat[high,col] < A.iat[low,col]:
-            A.iloc[[low, high]] = A.iloc[[high, low]].values
-        if A.iat[mid,col] < A.iat[low,col]:
-            A.iloc[[low, mid]] = A.iloc[[mid, low]].values
-        if A.iat[high,col] < A.iat[mid,col]:
-            A.iloc[[mid,high]] = A.iloc[[high, mid]].values
-        A.iloc[[mid,high]] = A.iloc[[high, mid]].values
-        return A.iat[high,col]
-    else:
-        if A.iat[high,col] > A.iat[low,col]:
-            A.iloc[[low, high]] = A.iloc[[high, low]].values
-        if A.iat[mid,col] > A.iat[low,col]:
-            A.iloc[[low, mid]] = A.iloc[[mid, low]].values
-        if A.iat[high,col] > A.iat[mid,col]:
-            A.iloc[[mid,high]] = A.iloc[[high, mid]].values
-        A.iloc[[mid,high]] = A.iloc[[high, mid]].values
-        return A.iat[high,col]
+        if vals[index[high]] < vals[index[low]]:
+            index[low],index[high] = index[high], index[low]
+        if vals[index[mid]] < vals[index[low]]:
+            index[low],index[mid] = index[mid], index[low]
+        if vals[index[high]] < vals[index[mid]]:
+            index[mid],index[high] = index[high], index[mid]
 
-def partition(A, col, low, high, asc = True):
-    ### Helper for Quicksort on partitioning ###
-    pivot_val = median_of_three(A,col, low, high, asc)
+    # descending version
+    else:
+        if vals[index[high]] > vals[index[low]]:
+            index[low],index[high] = index[high], index[low]
+        if vals[index[mid]] > vals[index[low]]:
+            index[low],index[mid] = index[mid], index[low]
+        if vals[index[high]] > vals[index[mid]]:
+            index[mid],index[high] = index[high], index[mid]
+     # swaps mid and high to make new pivot value for partitions
+    index[mid], index[high] = index[high], index[mid]
+    return vals[index[high]], index
+
+## Helper for Quicksort on working with partitioning ##
+def partition(vals, index, low, high, asc):
+
+    # Use the pivot value helper function
+    # Take the dataframe ref, column, index_guide and low and high slice locations
+    # Use the dataframe to get the values of interest
+
+    pivot_val, index = median_of_three(vals, index, low, high, asc)
     i = low - 1
     if asc == True:
         for j in range(low, high):
-            if A.iat[j,col] <= pivot_val:
+            if vals[index[j]] <= pivot_val:
                 i += 1
-                A.iloc[[i,j]] = A.iloc[[j,i]].values
-        A.iloc[[i+1,high]] = A.iloc[[high, i+1]].values
-        return i + 1
+                index[i], index[j] = index[j], index[i]
     else:
         for j in range(low, high):
-            if A.iat[j,col] >= pivot_val:
+            if vals[index[j]] >= pivot_val:
                 i += 1
-                A.iloc[[i, j]] = A.iloc[[j, i]].values
-        A.iloc[[i + 1, high]] = A.iloc[[high, i + 1]].values
-        return i + 1
+                index[i], index[j] = index[j], index[i]
+    index[i + 1], index[high] = index[high], index[i + 1]
+    return i + 1, index
 
 @ timer_decorator
 def quick_sort_iter(A ,col, asc = True):
-#Iterative sorting using quicksort
-    low = 0
-    high = A.iloc[:,col].size -1
 
+    #Iterative sorting using quicksort
+    #Takes a dataframe, column of interest to sort, and whether it is ascending or not
+
+    vals = A.iloc[:,col].to_numpy()
+    index = list(range(len(A)))
     #### Creating initial stack size
-    size = high - low + 1
-    stack = [0]*size
+    # This stack is a list with a tuple
+    stack = [(0, len(A) - 1)]
 
     ### pushing initial values into the stack
-    stack[0] = low
-    stack[1]= high
-    top = 1
-
-    while top >= 0:
-        ### setting this back
-        high = stack[top]
-        low = stack[top -1]
-        top-=2
-
+    # as long as there are items in the stack run this loop
+    while stack:
+    # When you pop from a list, it returns the tuple
+    # we assign each element of the tuple to an index value
+        low, high = stack.pop()
         if low < high:
             #
-            p = partition(A, col, low, high, asc)
+            p , index = partition(vals, index, low, high, asc)
     # Try to grab the larger size of the partition to deal with first
-            left_side_size = p - 1 - low
-            right_side_size = high - p + 1
+            left_side_size = p - low
+            right_side_size = high - p
 
             if left_side_size > right_side_size:
     # This means left is the bigger side of the partition
-                if p - 1 > low:
-                    top += 1; stack[top] = low
-                    top += 1; stack[top] = p -1
-                if p + 1 < high:
-                    top += 1; stack[top] = p + 1
-                    top += 1; stack[top] = high
+        # Add tuples for slices to go through, first left then right
+                stack.append((low, p-1))
+                stack.append((p+1, high))
             else:
     # This means right side is bigger or they are the same size
-                if p + 1 < high:
-                    top += 1; stack[top] = p + 1
-                    top += 1; stack[top] = high
-                if p-1 > low:
-                    top += 1; stack[top] = low
-                    top += 1; stack[top] = p - 1
-
+        # Add tuples for slices, first right then left
+                stack.append((p + 1, high))
+                stack.append((low, p-1))
+    # do the final swapping
+    A.iloc[:] = A.iloc[index].values
 
 @ timer_decorator
-def quick_sort_rec(A,col,low = 0, high = None ,asc = True):
+def quick_sort_rec(A,col, index = None, low = 0, high = None ,asc = True):
+    top_level = index is None
+    vals = A.iloc[:,col].to_numpy()
     if high is None:
-        high = A.iloc[:,col].size -1
+        high = len(A) - 1
+    if index is None:
+        top_level = True
+        index = list(range(len(A)))
     if low < high:
-        pivot_loc = partition(A, col, low, high, asc)
+        pivot_loc,index = partition(vals, index, low, high, asc)
 
-        quick_sort_rec(A,col,low, pivot_loc-1, asc)
-        quick_sort_rec(A,col,pivot_loc+1, high, asc)
+        quick_sort_rec(A,col,index, low, pivot_loc-1, asc)
+        quick_sort_rec(A,col,index, pivot_loc+1, high, asc)
+    if top_level:
+        A.iloc[:] = A.iloc[index].values
+    else:
+        return index
 
 # Merge Sort Helper Function
 
-def merge(A: pd.DataFrame, col: int, left: int, middle: int, right: int, asc=True):
-    n1 = middle - left + 1
-    n2 = right - middle
+def merge(vals, index, left: int, middle: int, right: int, asc=True):
+    # Merge helper function
+    # takes the vals from the array column (list)
+    # values of slicing indexes (left, middle right)
+    # sorting method (ascending or descending)
 
-    # Use .copy() so changes to A don't alter these mid-operation
-    left_array = A.iloc[left: left + n1].copy()
-    right_array = A.iloc[middle + 1: middle + 1 + n2].copy()
+    # creates two different subarrays
+    # remember array slices are up to on the right
+    left_array = index[left:middle + 1]
+    right_array = index[middle + 1: right+1]
 
+    # setting indices. Making k based on beginning of slice to iterate properly
     i = j = 0
     k = left
 
-    while i < n1 and j < n2:
-        val_left = left_array.iloc[i, col]
-        val_right = right_array.iloc[j, col]
+    # go through the two sides of the array
+    # Make a comparison with the first values from each array based on the final sort
+    # (ascending/descending)
+    # iterate k
+
+    while i < len(left_array) and j < len(right_array):
+        val_left = vals[left_array[i]]
+        val_right = vals[right_array[j]]
 
         # Handle ascending vs descending comparison
         condition = (val_left <= val_right) if asc else (val_left >= val_right)
+        # ascending puts values on on the left. descending on the right
+        # tied values go on the left
 
         if condition:
-            A.iloc[k] = left_array.iloc[i]
+            index[k] = left_array[i]
             i += 1
         else:
-            A.iloc[k] = right_array.iloc[j]
+            index[k] = right_array[j]
             j += 1
         k += 1
-
-    while i < n1:
-        A.iloc[k] = left_array.iloc[i]
-        i += 1
-        k += 1
-
-    while j < n2:
-        A.iloc[k] = right_array.iloc[j]
-        j += 1
-        k += 1
+    # add the remaining things to the right
+    remaining = left_array[i:] or right_array[j:]
+    index[k:k + len(remaining)]= remaining
+    return index
 
 @ timer_decorator
 def merge_sort_iter(A: pd.DataFrame, col: int, asc=True):
     n = len(A)
+    vals = A.iloc[:,col].to_numpy()
+    index = list(range(len(A)))
     curr_size = 1
 
     while curr_size < n:
@@ -346,86 +394,42 @@ def merge_sort_iter(A: pd.DataFrame, col: int, asc=True):
             right_end = min(left_start + 2 * curr_size - 1, n - 1)
 
             # Pass col and asc down to the merge function
-            merge(A, col, left_start, mid, right_end, asc)
+            index = merge(vals, index, left_start, mid, right_end, asc)
             left_start += 2 * curr_size
 
         curr_size *= 2
+    # Final Swapping
+    A.iloc[:] = A.iloc[index].values
 
 @ timer_decorator
-def merge_sort_rec(A: pd.DataFrame, col: int, asc: bool = True):
-    if len(A) <= 1:
-        return A
+def merge_sort_rec(A: pd.DataFrame, col: int, asc: bool = True, index = None, vals = None, left = 0, right = None):
+    # setting an indicator when it hits the bottom of the stack
+    top_level = index is None
 
-    #split array in half
-    mid = len(A) // 2
-    left_half = A.iloc[:mid]
-    right_half = A.iloc[mid:]
+    #setting up helper values
+    if top_level:
+        # checks to make sure it's even worth sorting
+        if len(A) <= 1:
+            return
+        # sets up the helper lists for speed
+        vals = A.iloc[:,col].to_numpy()
+        index = list(range(len(A)))
+        # initializing right to the last index
+        right= len(A) -1
+    # goes through the different sides
+    if left < right:
+        mid = left + (right - left)//2
+        index = merge_sort_rec(A, col, asc, index, vals, left, mid)
+        index = merge_sort_rec(A,col,asc,index, vals, mid + 1, right)
+        index = merge(vals, index, left, mid, right, asc)
+    # when it gets back to first part of stack
+    if top_level:
+        A.iloc[:] = A.iloc[index].values
+    # returns the index it's been mutating
+    else:
+        return index
 
-    merge_sort_rec(left_half, col, asc)
-    merge_sort_rec(right_half, col, asc)
-
-    i = j = k = 0
-
-    #recursively sorting
-    while i < len(left_half) and j < len(right_half):
-        left_val = left_half.iat[i, col]
-        right_val = right_half.iat[j, col]
-
-        if (asc and left_val <= right_val) or (not asc and left_val >= right_val):
-            A.iloc[k] = left_half.iloc[i].values
-            i += 1
-        else:
-            A.iloc[k] = right_half.iloc[j].values
-            j += 1
-        k += 1
-
-    while i < len(left_half):
-        A.iloc[k] = left_half.iloc[i].values
-        i += 1
-        k += 1
-
-    while j < len(right_half):
-        A.iloc[k] = right_half.iloc[j].values
-        j += 1
-        k += 1
-
-    return A
 ### Search Algorithms ###
-"""
-def bin_search_iter(A,v):
-  ###Return the index of v in sorted list A, or None if v is absent.
-    low = 0
-    high = len(A) - 1
-
-    while low <= high:
-        mid = (low + high) // 2
-
-        if A[mid] == v:
-            return mid
-        elif A[mid] < v:
-            low = mid + 1
-        else:
-            high = mid - 1
-
-    return None
-
-def bin_search_rec(A,v):
-  ###Return the index of v in sorted list A, or None if v is absent.
-
-    def search(low, high):
-        if low > high:
-            return None
-
-        mid = (low + high) // 2
-
-        if A[mid] == v:
-            return mid
-        elif A[mid] < v:
-            return search(mid + 1, high)
-        else:
-            return search(low, mid - 1)
-
-    return search(0, len(A) - 1)"""
 
 @ timer_decorator
 def binary_search_iter(A, col=0, value=None, asc=True, bound=None):
