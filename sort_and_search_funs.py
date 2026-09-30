@@ -12,61 +12,98 @@ import sys
 # Note: timer_decorator currently optimized to return value
 
 @ timer_decorator
-def insert_sort_iter(A,col,asc = True): #A is a dataframe, col is number
+def insert_sort_iter(A,col,asc = True): 
+    # Goal: Sorting DataFrame using iterative insert sort
+    # A: DataFrame to sort
+    # col: column position used for comparison
+    # asc: should be True for ascending order, False for descending order
+
+    # Store the number of rows in the DataFrame
     n = len(A)
+
+    # DataFrame with 0 or 1 is already sorted. 
     if n <= 1:
         return
-
+    # Create a list of row indices
+    # DataFrame rows are not moved during the sorting process
     index_guide = list(range(n))
-    # Shifting values in a premade list in order to track where insertions are happening
+    # Shifting values in a premade list to track where insertions are happening
 
+    # Begin at the second row because the first row is already sorted.
     for i in range(1,n):
+        # Compare the current row with the row before it. 
         j = i - 1
+        # Store the index of the row being inserted.
         key = index_guide[i]
         if asc == True:
+            # Shift the indices to the right while the value of the key is smaller than the value in the sorted portion.
             while j >= 0 and A.iat[i,col] < A.iat[index_guide[j],col]:
+                # Shift the larger index one position to the right. 
                 index_guide[j+1] = index_guide[j] #if key is less than swap
                 j -= 1
+            # Insert the key index into its correct position. 
             index_guide[j + 1] = key
         else:
+            # Shift the indices to the right while the key's value is larger than the value in the sorted position.
             while j >= 0 and A.iat[i, col] > A.iat[index_guide[j], col]:
+                # Shift the smaller index one position to the right.
                 index_guide[j + 1] = index_guide[j]  # if key is less than swap
                 j -= 1
+            # Insert the key index into its correct descending order position. 
             index_guide[j + 1] = key
-    # Reorder the
+    # Reorder the entire DataFrame using the completed index guide.
     A.iloc[:] = A.iloc[index_guide].values
 
 
 @timer_decorator
 def insert_sort_rec(A, col, n=None, index_guide = None, asc=True):
+    # Goal: Sorting DataFrame using recursive insert sort
+    # A: DataFrame to sort
+    # col: column position used for comparison
+    # asc: should be True for ascending order, False for descending order
 
+    # If n was not given, use the full length of the DataFrame.
     if n is None:
         n = len(A) # allows for dynamic sizing
+    # If no index guide exists, create one that contains all row indices.
     if index_guide is None:
         index_guide = list(range(n))
+    # Base Case: A prefix with 0 or 1 is already sorted.
     if n <= 1:
         return  index_guide
-    # start recursions
-    # sending an index guide to do the final swap only once.
+    
+    # Start recursion by sorting the first n-1 rows. 
+    # The same index guide is passed through every recursive call
     index_guide = insert_sort_rec(A, col, n = n - 1, index_guide = index_guide, asc= asc)
+
+    # The last row in the sorted prefix is the key to insert. 
     key_index = index_guide[n-1]
+    # Store the value of the key from the selected column. 
     key_val = A.iat[key_index,col]
+    # Begin comparing the key with the row immediately before it.
     j = n - 2
 
     if asc == True:
+        # Shift indices to the right while the key is smaller than the values in the sorted prefix.
         while j >= 0 and key_val < A.iat[index_guide[j], col]:
+            # Move the larger index one position to the right.
             index_guide[j + 1] = index_guide[j]  # if key is less than swap
             j -= 1
 
     else:
+        # Shift indices to the right while the key is larger than the values in the sorted prefix. 
         while j >= 0 and key_val > A.iat[index_guide[j], col]:
+            # Move the smaller index position to the right.
             index_guide[j + 1] = index_guide[j]  # if key is less than swap
             j -= 1
+    # Insert the key index into its correct position.
     index_guide[j + 1] = key_index
-## only swaps at end
+
+    # DataFrame is reordered after the entire recursive process finishes,
     if n == len(A):
         A[:] = A.iloc[index_guide].values
-    return index_guide # So that it's using the same guide for the entire time
+    # Return the index guide so every recursive call uses the same guide.
+    return index_guide # So that it's using the same guide the entire time
 
 
 
