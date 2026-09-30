@@ -4,7 +4,13 @@ import pandas as pd
 from util_funs import timer_decorator
 import sys
 
-# note: A.iat gets a single value using integer positioning in pandas
+##########################################
+##       SORT FUNCTIONS                 ##
+##     For Use with Dataframe Objects   ##
+##     Fitted with Timer Decorators     ##
+##########################################
+# Note: timer_decorator currently optimized to return value
+
 @ timer_decorator
 def insert_sort_iter(A,col,asc = True): #A is a dataframe, col is number
     n = len(A)
