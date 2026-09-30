@@ -3,7 +3,6 @@
 
 from sort_and_search_funs import *
 import pandas as pd
-import matplotlib.pyplot as plt
 import plotly.express as px
 import anndata as ad
 import timeit
@@ -127,10 +126,8 @@ def main():
 
     adata = ad.read_h5ad("./data/pbmc_sample.h5ad")
 
-    # Useful while developing
-    #print(adata)
-    #print(adata.T.var.columns)
-    #print(adata.T.var.head())
+    # Setting up dictionaries in order to store results and timing information
+
     timing_dict = {}
     results_dict = {}
     # ============================================================
@@ -138,7 +135,11 @@ def main():
     # ============================================================
     sorting_functions = [insert_sort_iter, insert_sort_rec, selection_sort_iter, selection_sort_rec,
                          merge_sort_iter, merge_sort_rec, quick_sort_iter, quick_sort_rec]
-    ## required for insert sort recursion to work
+
+    #sorting_functions = [insert_sort_rec, selection_sort_rec,quick_sort_rec,merge_sort_rec,]
+    #
+    ## Some of the recursion functions like insert_sort recursive have large stack overheads
+    ## Increasing the stack size in order to not max out recursion limit
 
     sys.setrecursionlimit(2000)
 
@@ -153,17 +154,33 @@ def main():
         results_dict.update(results)
         timing_dict.update(timings)
 
+
+    # ============================================================
+    # DISPLAY / SAVE RESULTS
+    # ============================================================
+
+    #Import Timing dictionary (timing_dict) to Dataframe Object from Dictionary
+    # Make every column with a header. Sort lowest to highest based on first step
+    # Print the timings dataframe and export dataframe as tsv for later use in output folder
+    # Export dataframe as tsv for later
+
     timings_df = pd.DataFrame.from_dict(timing_dict, orient = 'index')
     timings_df.index.name = "sorting function"
+    timings_df.sort_values(by= timings_df.columns[0], ascending = True, inplace = True)
+    timings_df.to_csv("./output/timings.tsv",sep = '\t', index = True)
     print(timings_df)
 
+
     #Create a tidy dataframe for plotting
+    # Using an interactive graph with plotly for easily visualization
+    # This requires melting the dataframe in a long form
     tidy_df = pd.melt(timings_df.reset_index(),
         id_vars = "sorting function",
         value_vars = ['mt sort times', 'gene sort times'],
         var_name = "sorting step",
         value_name = "time"
     )
+
 
     fig = px.bar(
         tidy_df,
@@ -177,22 +194,7 @@ def main():
     )
     fig.update_traces(textposition='outside')
     fig.show()
-    #results = filter_mt_cells(
-    #    adata,
-    #    mt_exp_lvl_threshold=0.10,   # temporary test value
-    #    gene_exp_threshold=200      # temporary test value
-    #)
-
-
-    # ============================================================
-    # DISPLAY / SAVE RESULTS
-    # ============================================================
-
-    # TODO:
-    # print timing table
-    # save timing results
-    # eventually create plots/table required for analysis
-
+    fig.write_html("./output/timings_graph.html")
 
 if __name__ == "__main__":
     main()
