@@ -1,0 +1,138 @@
+
+def quick_sort_rec(A,col,low = 0, high = None ,asc = True):
+    # Goal: Sorting the dataframe using recursive quick sort
+    #A: dataframe to be sorted
+    # col: column index
+    # low: starting row index
+    #high: ending row index
+    #asc:  True for ascending order sorting
+
+    #Initially set high to the last index of the dataframe
+    if high is None:
+        high = A.iloc[:,col].size -1
+
+    if low < high:
+        #Split the array around a pivot
+        pivot_loc = partition(A, col, low, high, asc)
+
+        #Recursiviely sort elements on the left of the pivot
+        quick_sort_rec(A,col,low, pivot_loc-1, asc)
+
+        #Recursively sort elements on the right of the pivot
+        quick_sort_rec(A,col,pivot_loc+1, high, asc)
+
+
+
+# Helper function for Quicksort to find pivot 
+def median_of_three(A, col, low, high, asc = True):
+    #Goal: Using Median of Three Pandas method instead of Lomuto Partitioning.
+    #The Median of Three method sorts by low, middle and high numbers to choose a better pivot.
+    # A: dataframe to be sorted
+    # col: column index
+    # low: starting row index
+    # high: ending row index
+    # asc:  True for ascending order sorting
+
+    #Find the mid point
+    mid = low + (high - low) // 2
+  
+    # Sorting the low, mid and high positions in place (ascending order)
+    if asc == True:
+        if A.iat[high,col] < A.iat[low,col]:
+            A.iloc[[low, high]] = A.iloc[[high, low]].values
+        if A.iat[mid,col] < A.iat[low,col]:
+            A.iloc[[low, mid]] = A.iloc[[mid, low]].values
+        if A.iat[high,col] < A.iat[mid,col]:
+            A.iloc[[mid,high]] = A.iloc[[high, mid]].values
+        A.iloc[[mid,high]] = A.iloc[[high, mid]].values
+        return A.iat[high,col]
+    # Sorting the low, mid and high positions in place (descending order)
+    else:
+        if A.iat[high,col] > A.iat[low,col]:
+            A.iloc[[low, high]] = A.iloc[[high, low]].values
+        if A.iat[mid,col] > A.iat[low,col]:
+            A.iloc[[low, mid]] = A.iloc[[mid, low]].values
+        if A.iat[high,col] > A.iat[mid,col]:
+            A.iloc[[mid,high]] = A.iloc[[high, mid]].values
+        A.iloc[[mid,high]] = A.iloc[[high, mid]].values
+        return A.iat[high,col]
+
+### Helper for Quicksort on partitioning ###
+def partition(A, col, low, high, asc = True):
+    #Goal: Partition the dataframe around the pivot selected from median_of_three
+    #This function will return the final index
+    # A: dataframe to be sorted
+    # col: column index
+    # low: starting row index
+    # high: ending row index
+    # asc:  True for ascending order sorting
+    pivot_val = median_of_three(A,col, low, high, asc)
+    i = low - 1
+
+    if asc == True:
+        for j in range(low, high):
+            if A.iat[j,col] <= pivot_val:
+                i += 1
+                A.iloc[[i,j]] = A.iloc[[j,i]].values
+        A.iloc[[i+1,high]] = A.iloc[[high, i+1]].values
+        return i + 1
+    else:
+        for j in range(low, high):
+            if A.iat[j,col] >= pivot_val:
+                i += 1
+                A.iloc[[i, j]] = A.iloc[[j, i]].values
+        A.iloc[[i + 1, high]] = A.iloc[[high, i + 1]].values
+        return i + 1
+
+@ timer_decorator
+def quick_sort_iter(A ,col, asc = True):
+#Goal: Sorting the dataframe using iterative quick sort
+# A: dataframe to be sorted
+# col: column index
+# low: starting row index
+# high: ending row index
+# asc:  True for ascending order sorting
+    low = 0
+    #
+    high = A.iloc[:,col].size -1
+
+    # Creating initial stack size
+    size = high - low + 1
+    stack = [0]*size
+
+    #Pushing initial values into the stack
+    stack[0] = low
+    stack[1]= high
+    top = 1
+
+    while top >= 0:
+        #
+        high = stack[top]
+        low = stack[top -1]
+        top-=2
+
+        if low < high:
+            #Using partition function to divide
+            p = partition(A, col, low, high, asc)
+
+            # Sizing the partitions
+            left_side_size = p - 1 - low
+            right_side_size = high - p + 1
+
+            if left_side_size > right_side_size:
+            # Starting the sorting with the left side if it is the bigger side of the partition
+                if p - 1 > low:
+                    top += 1; stack[top] = low
+                    top += 1; stack[top] = p -1
+                if p + 1 < high:
+                    top += 1; stack[top] = p + 1
+                    top += 1; stack[top] = high
+            else:
+            # If right side is the bigger partition or they are the same size
+                if p + 1 < high:
+                    top += 1; stack[top] = p + 1
+                    top += 1; stack[top] = high
+                if p-1 > low:
+                    top += 1; stack[top] = low
+                    top += 1; stack[top] = p - 1
+
