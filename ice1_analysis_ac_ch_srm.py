@@ -1,4 +1,4 @@
-#  coding: utf-8
+# coding: utf-8
 # ice1_analysis
 
 from sort_and_search_funs import *
@@ -136,12 +136,12 @@ def main():
     sorting_functions = [insert_sort_iter, insert_sort_rec, selection_sort_iter, selection_sort_rec,
                          merge_sort_iter, merge_sort_rec, quick_sort_iter, quick_sort_rec]
 
-    #sorting_functions = [insert_sort_rec, selection_sort_rec,quick_sort_rec,merge_sort_rec,]
-    #
+
     ## Some of the recursion functions like insert_sort recursive have large stack overheads
     ## Increasing the stack size in order to not max out recursion limit
+    ## This is a limitation of using recursive algorithms at this time
 
-    sys.setrecursionlimit(2000)
+    sys.setrecursionlimit(3000)
 
     # ============================================================
     # RUN FILTER
