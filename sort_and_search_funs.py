@@ -67,22 +67,46 @@ def insert_sort_rec(A, col, n=None, index_guide = None, asc=True):
 
 @timer_decorator
 def selection_sort_iter(A,col = 0,asc = True):
+ 
+    # Goal: Sorting a DataFrame using iterative selection sort.
+    # A: DataFrame to sort
+    # col: column position used for comparison
+    # asc: should be True for ascending order, False for descending order
+
+    # Obtain the number of rows in the DataFrame
     length = A.iloc[:,col].size
     if asc == True:
+        # Process every position except the final one
+        # The final element should be in the correct position
         for i in range(length -1):
             # finding the minimum element in the unsorted sublist from a dataframe column
             # once found, it can be swapped with the index of i
+            
+            # Assume that the first element in the unsorted portion is the smallest element.
             min = i
+
+            # Search the remaining unsorted portion of the column. 
             for j in range(i+1,length):
+
+                # Update the min if a smaller value is found.
                 if A.iat[j,col] < A.iat[min,col]:
                     min = j
+            # Exchange the selected minimum row with row i
+            # Entire row is exchanged, not just the selected column
             A.iloc[[i,min]] = A.iloc[[min,i]].values
     else:
+        # Descending-order version searches for the maximum.
         for i in range(length - 1): #same thing, but with max
+            # Assume the first element in the unsorted portion is the largest element.
             max = i
+
+            # Search the remaining unsorted portion of the column.
             for j in range(i+1,length):
+
+                # Update the max if a larger value is found. 
                 if A.iat[j,col] > A.iat[max,col]:
                     max = j
+            # Exchange the selected maximum row with row i
             A.iloc[[i,max]] = A.iloc[[max,i]].values
 
 @ timer_decorator
