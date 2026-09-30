@@ -1,3 +1,4 @@
+# coding: utf-8
 # MODULE NAME:  util_funs.py
 
 # IMPORTS
@@ -57,6 +58,8 @@ import timeit
 #
 #     return wrapper
 
+### Class based Decorator Adaptor for use in measuring complete Times
+## Returns out the execution time
 
 class timer_decorator:
     def __init__(self, func):
@@ -81,7 +84,7 @@ class timer_decorator:
             execution_time = end_time - start_time
             print(f"{self.func.__name__} total execution time: {execution_time:.6f} seconds")
             return execution_time
-            #understand dangerous, but unsure how to otherwise pull it
+            #understand dangerous, but unsure how to otherwise pull it off
 ###
 # Make sure this module is imported
 if __name__ == '__main__':

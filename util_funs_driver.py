@@ -1,3 +1,4 @@
+#  coding: utf-8
 # MODULE NAME: utils_funs_driver.py
 
 # IMPORTS
