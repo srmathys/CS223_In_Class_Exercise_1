@@ -117,22 +117,45 @@ def selection_sort_iter(A,col = 0,asc = True):
 
 @ timer_decorator
 def selection_sort_rec(A,col = 0,asc = True, i = 0):
+    # Sort DataFrame using recursive selection sort.
+    # i = first position in the unsorted portion of the DataFrame
+
+    # Number of rows in the DataFrame
     length = A.iloc[:,col].size
+
+    # If ascending is True, place the smallest value in the first unsorted position. 
     if asc == True:
+
+        # Assume the first position in the unsorted portion contains the minimum value. 
         min = i
+
+        # Search the remaining unsorted rows for a smaller value.
         for j in range(i + 1, length):
+
+            # If a smaller index is found, store its row index. 
             if A.iat[j, col] < A.iat[min, col]:
                 min = j
+        # Swap the row at position i with the row containing the minimum value.
         A.iloc[[i, min]] = A.iloc[[min, i]].values
-
+        
+        # If more than one unsorted row remains, recursively sort the remaining portion of the DataFrame
         if i+1 < length:
             selection_sort_rec(A,col, asc = True, i = i+1)
+    # If asc is False, sort the DataFrame in descending order by placing the largest value in the unsorted position.
     else:
+        # Assume the first position in the unsorted portion contains the maximum value
         max = i
+
+        # Search the remaining unsorted rows for a larger value.
         for j in range(i + 1, length):
+
+            # If a larger value is found, store its row index.
             if A.iat[j, col] > A.iat[max, col]:
                 max = j
+        # Swap the row position at i with the row containing the maximum value.
         A.iloc[[i, max]] = A.iloc[[max, i]].values
+
+        # If more than one unsorted row remains, recursively sort the remaining portion of the DataFrame. 
         if i+1 < length:
             selection_sort_rec(A,col, asc = False, i = i+1)
 
