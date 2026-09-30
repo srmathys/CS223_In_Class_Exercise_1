@@ -13,67 +13,104 @@ import sys
 # Note: timer_decorator currently optimized to return value
 
 @ timer_decorator
-def insert_sort_iter(A,col,asc = True): #A is a dataframe, col is number
+def insert_sort_iter(A,col,asc = True): 
+    # Goal: Sorting DataFrame using iterative insert sort
+    # A: DataFrame to sort
+    # col: column position used for comparison
+    # asc: should be True for ascending order, False for descending order
+
+    # Store the number of rows in the DataFrame
     n = len(A)
+
+    # DataFrame with 0 or 1 is already sorted. 
     if n <= 1:
         return
-    # using a guide list to track insertions
+    # Create a list of row indices
+    # DataFrame rows are not moved during the sorting process
     index_guide = list(range(n))
     # using a value list for easy checking
     vals = A.iloc[:,col].to_numpy()
     # Shifting values in a premade list in order to track where insertions are happening
 
+    # Begin at the second row because the first row is already sorted.
     for i in range(1,n):
+        # Compare the current row with the row before it. 
         j = i - 1
+        # Store the index of the row being inserted.
         key = index_guide[i]
         # Using the index_guide
         if asc == True:
+            # Shift the indices to the right while the value of the key is smaller than the value in the sorted portion.
             while j >= 0 and vals[i] < vals[index_guide[j]]:
+      # Shift the larger index one position to the right. 
                 index_guide[j+1] = index_guide[j] #if key is less than swap
                 j -= 1
+            # Insert the key index into its correct position. 
             index_guide[j + 1] = key
         else:
+          # Shift the indices to the right while the key's value is larger than the value in the sorted position.
             while j >= 0 and vals[i] > vals[index_guide[j]]:
+     # Shift the smaller index one position to the right.
                 index_guide[j + 1] = index_guide[j]  # if key is less than swap
                 j -= 1
+            # Insert the key index into its correct descending order position. 
             index_guide[j + 1] = key
-    # Reorder the original dataframe
+    # Reorder the entire dataframe using the completed index guide
     A.iloc[:] = A.iloc[index_guide].values
 
 
 @timer_decorator
 def insert_sort_rec(A, col, n=None, index_guide = None, asc=True):
+    # Goal: Sorting DataFrame using recursive insert sort
+    # A: DataFrame to sort
+    # col: column position used for comparison
+    # asc: should be True for ascending order, False for descending order
 
     # pulling out a list of values for quick checking
     vals = A.iloc[:,col].to_numpy()
+    # If n was not given, use the full length of the DataFrame.
     if n is None:
         n = len(A) # allows for dynamic sizing
+    # If no index guide exists, create one that contains all row indices.
     if index_guide is None:
     # creating a guide list to help with reordering at the end
         index_guide = list(range(n))
+    # Base Case: A prefix with 0 or 1 is already sorted.
     if n <= 1:
         return  index_guide
-    # start recursions
-    # sending an index guide to do the final swap only once.
+    
+    # Start recursion by sorting the first n-1 rows. 
+    # The same index guide is passed through every recursive call
     index_guide = insert_sort_rec(A, col, n = n - 1, index_guide = index_guide, asc= asc)
+
+    # The last row in the sorted prefix is the key to insert. 
     key_index = index_guide[n-1]
+    # Store the value of the key from the selected column. 
     key_val = vals[key_index]
+  # Begin comparing the key with the row immediately before it.
     j = n - 2
 
     if asc == True:
+      # Shift indices to the right while the key is smaller than the values in the sorted prefix.
         while j >= 0 and key_val < vals[index_guide[j]]:
+           # Move the larger index one position to the right.
             index_guide[j + 1] = index_guide[j]  # if key is less than swap
             j -= 1
 
     else:
+      # Shift indices to the right while the key is larger than the values in the sorted prefix. 
         while j >= 0 and key_val > vals[index_guide[j]]:
+        # Move the smaller index position to the right.
             index_guide[j + 1] = index_guide[j]  # if key is less than swap
             j -= 1
+    # Insert the key index into its correct position.
     index_guide[j + 1] = key_index
-## only swaps at end
+
+    # DataFrame is reordered after the entire recursive process finishes,
     if n == len(A):
         A[:] = A.iloc[index_guide].values
         return
+  # Return the index guide so every recursive call uses the same guide if not on original stack
     return index_guide # So that it's using the same guide for the entire time
 
 
@@ -168,17 +205,24 @@ def selection_sort_rec(A,col = 0,asc = True, index = None,  i = None):
 
     # Used for descending sort, same as above but with max instead of min.
     else:
+        # Assume the first position in the unsorted portion contains the maximum value
         max = i
+
+        # Search the remaining unsorted rows for a larger value.
         for j in range(i + 1, length):
+          # If a larger value is found, store its row index.
             if vals[index[j]] > vals[index[max]]:
                 max = j
+      # Swap the index row position at i with the row containing the maximum value.
         index[i],index[max] = index[max], index[i]
+      # If more than one unsorted row remains, recursively sort the remaining portion of the DataFrame. 
 
         if i+1 < length:
             index = selection_sort_rec(A,col, asc = asc, index = index, i =i+1)
     if i > 0:
         #allows for later loops to give returns and pass the index guide down
         return index
+    # On final loop triggers this as i will be equal to 0
     A.iloc[:] = A.iloc[index].values
 
 ### Helper functions for Quicksort ###
@@ -388,10 +432,12 @@ def merge_sort_rec(A: pd.DataFrame, col: int, asc: bool = True, index = None, va
 ### Search Algorithms ###
 
 def bin_search_iter(A, col, value, asc = True, exact = True):
-  ###Return the index of v in sorted list A, or None if v is absent."""
+  
+  ###Return the index of v in sorted list A, or -1 if v is absent."""
     low = 0
     high = len(A) - 1
     result_idx = -1 # set it to not found to start
+    
   ## These are index values, allows us to be more specific here
     if asc == True:
         while low <= high:
