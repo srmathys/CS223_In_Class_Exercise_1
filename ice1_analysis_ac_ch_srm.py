@@ -5,12 +5,16 @@ from sort_and_search_funs import *
 import pandas as pd
 import plotly.express as px
 import anndata as ad
-import timeit
 import sys
+import timeit
 
+# Modified the normal filter to include a sorting function call
+# The filtering step takes an anndata object, the threshold for mitochondrial expression
+# and the gene expression threshold
+# final export is a sorted anndata_obj.T.var and timings for each sorting step
 
 def filter_mt_cells(anndata_obj, mt_exp_lvl_threshold, gene_exp_threshold, sorting_func = "None"):
-    # Adding some things to just make it more useful overall, even though it's not exactly what is asked
+
 
     # ============================================================
     # 1. GET CELL DATAFRAME
@@ -81,7 +85,7 @@ def filter_mt_cells(anndata_obj, mt_exp_lvl_threshold, gene_exp_threshold, sorti
                                                                           gene_col, asc=True)
     print("\nSorted by gene-expression levels")
     print("Dataframe has size of", mt_filtered_df.shape[0], "rows and ", mt_filtered_df.shape[1], "columns")
-    print(mt_filtered_df.iloc[:5,:3])
+    print(mt_filtered_df.iloc[:5,:3],)
 
 
 
@@ -101,21 +105,18 @@ def filter_mt_cells(anndata_obj, mt_exp_lvl_threshold, gene_exp_threshold, sorti
 
     print("Filtered by gene-expression level threshold")
     print("Final size is", gene_filtered_df.shape[0], "rows and ", gene_filtered_df.shape[1], "columns")
-    print(gene_filtered_df.iloc[:5,:3])
+    print(gene_filtered_df.iloc[:5,:3],"\n")
     # ============================================================
     # 8. RETURN RESULTS
     # ============================================================
 
-    # We can decide exact return structure once timing functions
-    # and all sorting functions are finished.
 
-    # Possible structure:
-    #
     return results_dict, timing_dict
-    #     "filtered_data": ...,
+    #     # Where the timing dictionary has  the following:
     #     "mt_sort_times": mt_sort_times,
     #     "gene_sort_times": gene_sort_times
-    # }
+    # And the results dict stores the final sorted objects
+    # for later implementation of dataframe
 
 
 def main():
@@ -194,6 +195,8 @@ def main():
     )
     fig.update_traces(textposition='outside')
     fig.show()
+
+    # Save graph as an interactable html object
     fig.write_html("./output/timings_graph.html")
 
 if __name__ == "__main__":

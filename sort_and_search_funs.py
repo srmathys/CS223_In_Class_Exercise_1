@@ -1,9 +1,8 @@
 #  coding: utf-8
 # Sort and search functions
 import pandas as pd
-import numpy as np
 from util_funs import timer_decorator
-import sys
+
 
 ##########################################
 ##       SORT FUNCTIONS                 ##
